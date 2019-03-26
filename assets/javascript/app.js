@@ -3,16 +3,17 @@ $(document).ready(function () {
     // GLOBALS
     var TIMEOUT_MS = 1; // Pause the code execution for window to render.
     var NUM_GIF_COLS = 5; // Number of columns in display.
+    var GIF_LIMIT = 10; // Number of GIFs to display per query.
     var gifCounter = 0; // Counter so that we can tie in card elements associated with a single GIF.
 
     // Initial array of topics
-    var topics = [{ name: "Football", type: "gif", },
-    { name: "Soccer", type: "gif", },
-    { name: "Hockey", type: "gif", },
-    { name: "Tennis", type: "gif", },
+    var topics = [{ name: "Football", type: "gif", page: 0 },
+    { name: "Soccer", type: "gif", page: 0 },
+    { name: "Hockey", type: "gif", page: 0 },
+    { name: "Tennis", type: "gif", page: 0 },
     { name: "Batman", type: "movie" },
-    { name: "Harry Potter", type: "movie"},
-    { name: "Star Wars", type: "movie"}];
+    { name: "Harry Potter", type: "movie" },
+    { name: "Star Wars", type: "movie" }];
 
     // Function to initialize and get things started.
     function initialize() {
@@ -38,7 +39,7 @@ $(document).ready(function () {
             // This line will grab the text from the input box
             var name = $("#topic-input").val().trim();
             var type = "gif";
-            var newTopic = { name: name, type: type };
+            var newTopic = { name: name, type: type, page: 0 };
 
             // Do not add an empty button.
             if (name !== "") {
@@ -101,9 +102,13 @@ $(document).ready(function () {
             var name = topics[i].name;
             // Get the type of the button
             var type = topics[i].type;
+
             if (type === "gif") {
                 // Adding a class
                 a.addClass("btn btn-primary topic");
+                // Page number
+                var page = topics[i].page;
+                a.attr("page",""+page);
             }
             else if (type === "movie") {
                 // Adding a class
@@ -137,7 +142,11 @@ $(document).ready(function () {
             if (deleteButtons === false) {
                 var dataName = $(this).attr("data-name");
                 if (dataType === "gif") {
-                    getGIFs(dataName);
+                    var page = parseInt($(this).attr("page"));
+                    getGIFs(dataName,page);
+                    // Increment page offset for next time.
+                    page += GIF_LIMIT;
+                    $(this).attr("page",page);
                 }
                 else if (dataType === "movie") {
                     getMovies(dataName);
@@ -162,12 +171,12 @@ $(document).ready(function () {
     }
 
     // Get the GIFs and display them.
-    function getGIFs(dataName) {
+    function getGIFs(dataName,page) {
 
         var api_key = "YyVpePGv4I8Z6AqCLgop7tWvMwuUdOR6";
         var currentTopic = dataName;
         var queryURL = "https://api.giphy.com/v1/gifs/search?q=" + currentTopic + "&api_key=" + api_key +
-            "&limit=10";
+            "&offset=" + page + "&rating=g&limit=10";
 
         console.log(queryURL);
 
@@ -243,6 +252,9 @@ $(document).ready(function () {
                     newCardText.addClass("card-text");
                     newGifCardBody.append(newCardText);
 
+                    // Add a button to remove the card.
+                    newGifCardBody.append(createCardRemoveButton(gifCounter));
+
                     // NOTE : This does not work as expected.  It just opens the GIF in the current page.
                     //        So I commented it out.
                     // Add a link to click on to download the GIF.
@@ -272,6 +284,9 @@ $(document).ready(function () {
                         $(this).attr("src", $(this).attr("still-image"));
                     }
                 })
+
+                // Bind the remove button callbacks.
+                bindCardRemoveButtonCallback();
 
             });
     }
@@ -322,7 +337,7 @@ $(document).ready(function () {
                     var newGifCardImage = $("<img>");
                     newGifCardImage.addClass("card-img-top custom-card-img-top");
                     newGifCardImage.attr("id", "gifCardImage" + gifCounter);
-                    newGifCardImage.attr("onError","this.onerror=null;this.src='./assets/images/no-image.png';");
+                    newGifCardImage.attr("onError", "this.onerror=null;this.src='./assets/images/no-image.png';");
 
                     // Generate a new card body.
                     var newGifCardBody = $("<div>");
@@ -351,28 +366,45 @@ $(document).ready(function () {
                     newCardText.addClass("card-text");
                     newGifCardBody.append(newCardText);
 
+                    // Add a button to remove the card.
+                    newGifCardBody.append(createCardRemoveButton(gifCounter));
+
                     // Increment gif card counter.
                     gifCounter++;
                 }
 
-                // Bind the gif-button class callbacks.
-                if (false) {
-                    $(".gif-button").on("click", function () {
-
-                        // Get the current state of the image.
-                        var currentState = $(this).attr("image-state");
-                        if (currentState === "still") {
-                            $(this).attr("image-state", "animated");
-                            $(this).attr("src", $(this).attr("animated-image"));
-                        } else {
-                            $(this).attr("image-state", "still");
-                            $(this).attr("src", $(this).attr("still-image"));
-                        }
-                    })
-                }
-                // }
+                // Bind the remove button callbacks.
+                bindCardRemoveButtonCallback();
 
             });
+    }
+
+    // Add a button to remove the card.
+    function createCardRemoveButton(_gifCounter) {
+        var newRemoveButton = $("<button>");
+        newRemoveButton.addClass("btn btn-danger custom-remove-button");
+        newRemoveButton.attr("id", "gifCardRemoveButton" + _gifCounter);
+        var newSpan = $("<span>");
+        //newSpan.addClass("fas fa-trash-alt");
+        newSpan.addClass("icon");
+        newRemoveButton.append(newSpan);
+        //newRemoveButton.text("X");
+        //newRemoveButton.html("&#xf014");
+        //<span class="icon"></span>
+        return newRemoveButton;
+    }
+
+    // Bind the custom-remove-button class callback.
+    function bindCardRemoveButtonCallback() {
+        $(".custom-remove-button").on("click", function () {
+            //console.log($(this));
+            // Get the gif counter value associated with this button.
+            var buttonId = $(this).attr("id");
+            var gifId = parseInt(buttonId.split("gifCardRemoveButton")[1]);
+            // Get the parent card.
+            var cardId = "gifCard" + gifId;
+            $("#" + cardId).remove();
+        })
     }
 
 

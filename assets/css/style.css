@@ -66,3 +66,8 @@ button, div, form, input {
 .custom-movie-card-body {
     background: #e7ba3e;
 }
+
+span.icon:before {
+    font-family: FontAwesome; 
+    content:"\f014";
+}
