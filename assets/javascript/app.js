@@ -108,7 +108,7 @@ $(document).ready(function () {
                 a.addClass("btn btn-primary topic");
                 // Page number
                 var page = topics[i].page;
-                a.attr("page",""+page);
+                a.attr("page", "" + page);
             }
             else if (type === "movie") {
                 // Adding a class
@@ -143,10 +143,10 @@ $(document).ready(function () {
                 var dataName = $(this).attr("data-name");
                 if (dataType === "gif") {
                     var page = parseInt($(this).attr("page"));
-                    getGIFs(dataName,page);
+                    getGIFs(dataName, page);
                     // Increment page offset for next time.
                     page += GIF_LIMIT;
-                    $(this).attr("page",page);
+                    $(this).attr("page", page);
                 }
                 else if (dataType === "movie") {
                     getMovies(dataName);
@@ -171,7 +171,7 @@ $(document).ready(function () {
     }
 
     // Get the GIFs and display them.
-    function getGIFs(dataName,page) {
+    function getGIFs(dataName, page) {
 
         var api_key = "YyVpePGv4I8Z6AqCLgop7tWvMwuUdOR6";
         var currentTopic = dataName;
@@ -237,7 +237,7 @@ $(document).ready(function () {
                     newGifCardImage.attr("animated-image", animatedImageURL);
                     // Add the state.
                     newGifCardImage.attr("image-state", "still");
-                    newGifCardImage.addClass("gif-button");
+                    newGifCardImage.addClass("gif-button"+gifCounter);
 
                     // Add title.
                     var title = results[i].title;
@@ -255,6 +255,9 @@ $(document).ready(function () {
                     // Add a button to remove the card.
                     newGifCardBody.append(createCardRemoveButton(gifCounter));
 
+                    // Bind the callback for the gif button click.
+                    $(".gif-button"+gifCounter).on("click",gifButtonCallback);
+
                     // NOTE : This does not work as expected.  It just opens the GIF in the current page.
                     //        So I commented it out.
                     // Add a link to click on to download the GIF.
@@ -271,24 +274,24 @@ $(document).ready(function () {
                     gifCounter++;
                 }
 
-                // Bind the gif-button class callbacks.
-                $(".gif-button").on("click", function () {
-
-                    // Get the current state of the image.
-                    var currentState = $(this).attr("image-state");
-                    if (currentState === "still") {
-                        $(this).attr("image-state", "animated");
-                        $(this).attr("src", $(this).attr("animated-image"));
-                    } else {
-                        $(this).attr("image-state", "still");
-                        $(this).attr("src", $(this).attr("still-image"));
-                    }
-                })
-
                 // Bind the remove button callbacks.
                 bindCardRemoveButtonCallback();
 
             });
+    }
+
+    // Function for .gif-button? class callback.
+    function gifButtonCallback() {
+
+        // Get the current state of the image.
+        var currentState = $(this).attr("image-state");
+        if (currentState === "still") {
+            $(this).attr("image-state", "animated");
+            $(this).attr("src", $(this).attr("animated-image"));
+        } else {
+            $(this).attr("image-state", "still");
+            $(this).attr("src", $(this).attr("still-image"));
+        }
     }
 
     // Get the Movies and display them.
